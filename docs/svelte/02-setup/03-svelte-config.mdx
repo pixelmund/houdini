@@ -27,6 +27,7 @@ export default {
 - `quietQueryErrors` (optional, default: `false`): With this enabled, errors in your query will not be thrown as exceptions. You will have to handle error state in your route components or by hand in your load (or the `onError` hook).
 - `static` (optional, default: `false`): A flag to remove the session infrastructure from your application.
 - `framework` (optional, default: `undefined`): Should be automatically detected, but you can override it with `"kit"` or `"svelte"`.
+- `legacyStores` (optional, default: `false`): Make `graphql()` return the `svelte/store` based document stores instead of the [runes based documents](~/loading-data/runes-and-async). This is a migration aid and will be removed.
 
 ## Client Location
 

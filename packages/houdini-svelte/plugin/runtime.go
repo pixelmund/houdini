@@ -2,8 +2,10 @@ package plugin
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	coreruntime "code.houdinigraphql.com/packages/houdini-core/plugin/runtime"
@@ -52,7 +54,13 @@ func (p *HoudiniSvelte) transformRuntimeContent(
 			return content, nil
 		}
 
-		return `import { browser, building } from '$app/environment'
+		// SvelteKit 3 renamed $app/environment to $app/env
+		envModule := "$app/environment"
+		if kitMajorVersion(p.Fs, projectConfig.ProjectRoot) >= 3 {
+			envModule = "$app/env"
+		}
+
+		return `import { browser, building } from '` + envModule + `'
 import { error as svelteKitError, redirect as svelteKitRedirect } from '@sveltejs/kit'
 
 export const isBrowser = browser
@@ -172,13 +180,13 @@ func (p *HoudiniSvelte) UpdateIndexFiles(ctx context.Context) ([]string, error) 
 
 		imports.WriteString(
 			fmt.Sprintf(
-				"import type { %sStore } from '$houdini/plugins/houdini-svelte/stores/%s'\n",
+				"import type { %s$document } from '$houdini/plugins/houdini-svelte/stores/%s'\n",
 				name,
 				name,
 			),
 		)
 		overloads.WriteString(
-			fmt.Sprintf("export function graphql(str: `%s`): %sStore;\n", content, name),
+			fmt.Sprintf("export function graphql(str: `%s`): %s$document;\n", content, name),
 		)
 	})
 	if err != nil {
@@ -263,4 +271,29 @@ func (p *HoudiniSvelte) UpdateIndexFiles(ctx context.Context) ([]string, error) 
 	return []string{
 		targetPath,
 	}, nil
+}
+
+// kitMajorVersion returns the major version of the @sveltejs/kit installed in the project
+// (0 if it can't be determined)
+func kitMajorVersion(fs afero.Fs, projectRoot string) int {
+	contents, err := afero.ReadFile(
+		fs,
+		filepath.Join(projectRoot, "node_modules", "@sveltejs", "kit", "package.json"),
+	)
+	if err != nil {
+		return 0
+	}
+
+	var pkg struct {
+		Version string `json:"version"`
+	}
+	if err := json.Unmarshal(contents, &pkg); err != nil {
+		return 0
+	}
+
+	major, err := strconv.Atoi(strings.SplitN(pkg.Version, ".", 2)[0])
+	if err != nil {
+		return 0
+	}
+	return major
 }

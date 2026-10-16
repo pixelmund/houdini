@@ -14,12 +14,14 @@ test('modifies root +layout.svelte with data prop', async function () {
 	)
 
 	expect(result).toMatchInlineSnapshot(`
+		import { setHoudiniContext } from "$houdini/plugins/houdini-svelte/runtime/context";
 		import { deepEquals } from "houdini/runtime";
 		import { getCache } from "$houdini";
 		import { page } from "$app/state";
 		import { extractSession, getClientSession, setClientSession } from "$houdini/plugins/houdini-svelte/runtime/session";
 		import { onMount } from "svelte";
 		import { setClientStarted } from "$houdini/plugins/houdini-svelte/runtime/adapter";
+		setHoudiniContext(extractSession(page.data));
 		export let data
 		let houdini__session__initialized = false;
 		onMount(() => setClientStarted());
@@ -64,12 +66,14 @@ test('modifies root +layout.svelte without data prop', async function () {
 	const result = await test_transform_svelte('src/routes/+layout.svelte', ``)
 
 	expect(result).toMatchInlineSnapshot(`
+		import { setHoudiniContext } from "$houdini/plugins/houdini-svelte/runtime/context";
 		import { deepEquals } from "houdini/runtime";
 		import { getCache } from "$houdini";
 		import { page } from "$app/state";
 		import { extractSession, getClientSession, setClientSession } from "$houdini/plugins/houdini-svelte/runtime/session";
 		import { onMount } from "svelte";
 		import { setClientStarted } from "$houdini/plugins/houdini-svelte/runtime/adapter";
+		setHoudiniContext(extractSession(page.data));
 		let houdini__session__initialized = false;
 		onMount(() => setClientStarted());
 

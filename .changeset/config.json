@@ -16,6 +16,7 @@
 		"e2e-api",
 		"e2e-react",
 		"e2e-kit",
+		"e2e-kit-async",
 		"houdini-graphql"
 	]
 }

@@ -241,7 +241,8 @@ export async function load_%s(params: QueryStoreFetchParams<%s$result, %s$input>
     const store = new %s()
     await store.fetch(params)
     return { %s: store }
-}`,
+}
+%s`,
 		storeImport.Name,
 		storeImport.Module,
 		name,
@@ -258,6 +259,8 @@ export async function load_%s(params: QueryStoreFetchParams<%s$result, %s$input>
 		storeName,
 		storeName,
 		name,
+		documentExport(pluginConfig, name, storeName, refetchMethod, "createQuery", "query.svelte.js",
+			fmt.Sprintf("QueryFunction<%s$result, %s$input, typeof artifact>", name, name)),
 	), nil
 }
 
@@ -284,7 +287,8 @@ export class %s extends %s<%s$result, %s$input, %s$optimistic> {
             artifact,
         })
     }
-}`,
+}
+%s`,
 		name,
 		name,
 		name,
@@ -297,6 +301,8 @@ export class %s extends %s<%s$result, %s$input, %s$optimistic> {
 		name,
 		name,
 		name,
+		documentExport(pluginConfig, name, storeName, config.StorePaginationTypeNone, "createMutation", "mutation.svelte.js",
+			fmt.Sprintf("MutationDocument<%s$result, %s$input, %s$optimistic, typeof artifact>", name, name, name)),
 	)
 
 	return storeContent, nil
@@ -326,7 +332,8 @@ export class %s extends %s<%s$result, %s$input> {
             artifact,
         })
     }
-}`,
+}
+%s`,
 		name,
 		name,
 		name,
@@ -337,6 +344,8 @@ export class %s extends %s<%s$result, %s$input> {
 		storeImport.Name,
 		name,
 		name,
+		documentExport(pluginConfig, name, storeName, config.StorePaginationTypeNone, "createSubscription", "subscription.svelte.js",
+			fmt.Sprintf("SubscriptionFunction<%s$result, %s$input, typeof artifact>", name, name)),
 	)
 
 	return storeContent, nil
@@ -392,7 +401,39 @@ export class %s extends %s<%s$data, { %s: any }, %s$input, typeof artifact> {
             storeName: "%s",%s
         })
     }
-}`, storeImport.Name, storeImport.Module, name, name, name, name, name, extraImport, name, storeName, storeImport.Name, name, name, name, storeName, extraFields)
+}
+%s`, storeImport.Name, storeImport.Module, name, name, name, name, name, extraImport, name, storeName, storeImport.Name, name, name, name, storeName, extraFields,
+		documentExport(pluginConfig, name, storeName, refetchMethod, "createFragment", "fragment.svelte.js",
+			fmt.Sprintf("FragmentDocument<%s$data, typeof artifact>", name)),
+	)
 
 	return storeContent, nil
+}
+
+// documentExport generates <name>$document: the value graphql() turns into for the document,
+// along with its type. Documents are runes based unless the project opted into the legacy
+// stores. Paginated and refetchable documents are still backed by their stores.
+func documentExport(
+	pluginConfig config.PluginConfig,
+	name string,
+	storeName string,
+	refetchMethod config.StorePaginationType,
+	factory string,
+	module string,
+	documentType string,
+) string {
+	if pluginConfig.LegacyStores || refetchMethod != config.StorePaginationTypeNone {
+		return fmt.Sprintf(`
+export type %s$document = %s
+export const %s$document = (): %s$document => new %s()`, name, storeName, name, name, storeName)
+	}
+
+	// the type's name is the generic before the first type argument
+	typeName := documentType[:strings.Index(documentType, "<")]
+
+	return fmt.Sprintf(`
+import { %s, type %s } from '$houdini/plugins/houdini-svelte/runtime/%s'
+
+export type %s$document = %s
+export const %s$document = (): %s$document => %s(artifact)`, factory, typeName, module, name, documentType, name, name, factory)
 }

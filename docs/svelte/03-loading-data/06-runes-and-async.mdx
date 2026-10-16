@@ -1,0 +1,195 @@
+---
+title: Runes and Async
+description: Load data with runes, await and hydratable
+---
+
+`graphql()` returns documents built on Svelte 5 runes. Variables are passed straight into the query, and because the call happens inside `$derived`, every piece of state it reads becomes a dependency. There are no stores to subscribe to and no effects to wire up.
+
+## Setup
+
+Awaiting a query requires Svelte's async mode. With SvelteKit 3, enable it in the `sveltekit()` plugin:
+
+```typescript title="vite.config.ts"
+import { sveltekit } from '@sveltejs/kit/vite'
+import houdini from 'houdini/vite'
+import { defineConfig } from 'vite'
+
+export default defineConfig({
+	plugins: [
+		houdini(),
+		sveltekit({
+			compilerOptions: {
+				experimental: {
+					async: true,
+				},
+			},
+		}),
+	],
+})
+```
+
+Reading a query's `current` value works without the flag. Only `await` needs it.
+
+## Queries
+
+Call the query with its variables and await it inside of `$derived`:
+
+```svelte title="src/routes/user/[id]/+page.svelte"
+<script lang="ts">
+	import { page } from '$app/state'
+	import { graphql } from '$houdini'
+
+	const UserProfile = graphql(`
+		query UserProfile($id: ID!) {
+			user(id: $id) {
+				name
+			}
+		}
+	`)
+
+	const data = $derived(await UserProfile({ id: page.params.id }))
+</script>
+
+<h1>{data.user.name}</h1>
+```
+
+- On the server, the page is rendered once the query has resolved. The response is serialized into the page with Svelte's [`hydratable`](https://svelte.dev/docs/svelte/hydratable), so the browser hydrates the cache without sending the query again.
+- When `page.params.id` changes, the derived re-runs and the query is sent with the new variables. Variables that were loaded before are served from the cache.
+- When the cache updates (after a mutation, a subscription event or a refetch), `data` updates as well.
+
+Identical calls share one request: calling `UserProfile({ id: '1' })` in several components sends the query once.
+
+### Without await
+
+Leave out the `await` to render right away and show a loading state instead. The query is only sent in the browser:
+
+```svelte
+<script lang="ts">
+	import { graphql } from '$houdini'
+
+	let { id } = $props()
+
+	const UserProfile = graphql(`
+		query UserProfile($id: ID!) {
+			user(id: $id) {
+				name
+			}
+		}
+	`)
+
+	const user = $derived(UserProfile({ id }))
+</script>
+
+{#if user.loading}
+	Loading...
+{:else}
+	{user.current?.user.name}
+{/if}
+```
+
+A query exposes:
+
+- `current`: the latest data.
+- `loading`: `true` while a request is in flight.
+- `errors`: the GraphQL errors of the most recent response.
+- `error`: an error thrown while sending the query (a network failure, `throwOnError`, ...).
+- `refresh()`: sends the query again, ignoring the cache.
+
+### Outside of components
+
+To send a query from a load function, form action or endpoint, use `fetch`:
+
+```typescript title="src/routes/+page.server.ts"
+import { graphql } from '$houdini'
+
+const UserProfile = graphql(`
+	query UserProfile($id: ID!) {
+		user(id: $id) {
+			name
+		}
+	}
+`)
+
+export async function load(event) {
+	const { data } = await UserProfile.fetch({ event, variables: { id: event.params.id } })
+	return { name: data?.user.name }
+}
+```
+
+## Fragments
+
+`fragment()` returns the fragment's data. Call it inside of `$derived` so it follows the reference and the cache:
+
+```svelte title="src/lib/UserAvatar.svelte"
+<script lang="ts">
+	import { fragment, graphql, type UserAvatar } from '$houdini'
+
+	let { user }: { user: UserAvatar } = $props()
+
+	const UserAvatarFragment = graphql(`
+		fragment UserAvatar on User {
+			name
+			avatarURL
+		}
+	`)
+
+	const info = $derived(fragment(user, UserAvatarFragment))
+</script>
+
+<img src={info.avatarURL} alt={info.name} />
+```
+
+## Mutations
+
+```svelte
+<script lang="ts">
+	import { graphql } from '$houdini'
+
+	const UpdateUser = graphql(`
+		mutation UpdateUser($id: ID!, $name: String!) {
+			updateUser(id: $id, name: $name) {
+				id
+				name
+			}
+		}
+	`)
+</script>
+
+<button onclick={() => UpdateUser.mutate({ id: '1', name: 'Harry' })} disabled={UpdateUser.pending}>
+	Rename
+</button>
+```
+
+`pending` is `true` while a mutation is in flight and `result` holds the most recent response. Queries and fragments that read the mutated records update through the cache.
+
+## Subscriptions
+
+A subscription is connected while something reads it, and disconnects once nothing does:
+
+```svelte
+<script lang="ts">
+	import { graphql } from '$houdini'
+
+	let { id } = $props()
+
+	const UserUpdates = graphql(`
+		subscription UserUpdates($id: ID!) {
+			userUpdate(id: $id) {
+				name
+			}
+		}
+	`)
+
+	const updates = $derived(UserUpdates({ id }))
+</script>
+
+{updates.current?.userUpdate?.name}
+```
+
+## Content Security Policy
+
+`hydratable` adds an inline script to the page. If your app sets a Content Security Policy, configure SvelteKit's `csp` option so the script is allowed.
+
+## Migrating from stores
+
+Paginated and `@refetchable` documents are still backed by stores. To keep the store based API for every document while you migrate, set `legacyStores` in the [plugin config](~/setup/svelte-config).

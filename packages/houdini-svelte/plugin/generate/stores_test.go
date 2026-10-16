@@ -8,6 +8,7 @@ import (
 
 	"code.houdinigraphql.com/packages/houdini-svelte/plugin"
 	"code.houdinigraphql.com/packages/houdini-svelte/plugin/config"
+	"code.houdinigraphql.com/packages/houdini-svelte/plugin/generate"
 	"code.houdinigraphql.com/plugins"
 	"code.houdinigraphql.com/plugins/graphql"
 	"code.houdinigraphql.com/plugins/tests"
@@ -156,6 +157,11 @@ export * from './client'
 						        })
 						    }
 						}
+
+						import { createMutation, type MutationDocument } from '$houdini/plugins/houdini-svelte/runtime/mutation.svelte.js'
+
+						export type TestMutation1$document = MutationDocument<TestMutation1$result, TestMutation1$input, TestMutation1$optimistic, typeof artifact>
+						export const TestMutation1$document = (): TestMutation1$document => createMutation(artifact)
 					`),
 				},
 			},
@@ -178,6 +184,11 @@ export * from './client'
 						        })
 						    }
 						}
+
+						import { createSubscription, type SubscriptionFunction } from '$houdini/plugins/houdini-svelte/runtime/subscription.svelte.js'
+
+						export type TestSubscription1$document = SubscriptionFunction<TestSubscription1$result, TestSubscription1$input, typeof artifact>
+						export const TestSubscription1$document = (): TestSubscription1$document => createSubscription(artifact)
 					`),
 				},
 			},
@@ -204,6 +215,10 @@ export * from './client'
 						    }
 						}
 
+						import { createFragment, type FragmentDocument } from '$houdini/plugins/houdini-svelte/runtime/fragment.svelte.js'
+
+						export type TestFragment$document = FragmentDocument<TestFragment$data, typeof artifact>
+						export const TestFragment$document = (): TestFragment$document => createFragment(artifact)
 					`),
 				},
 			},
@@ -233,6 +248,8 @@ export * from './client'
 						    }
 						}
 
+						export type RefetchableUser$document = RefetchableUserStore
+						export const RefetchableUser$document = (): RefetchableUser$document => new RefetchableUserStore()
 					`),
 				},
 			},
@@ -264,6 +281,11 @@ export * from './client'
 						    await store.fetch(params)
 						    return { TestQuery: store }
 						}
+
+						import { createQuery, type QueryFunction } from '$houdini/plugins/houdini-svelte/runtime/query.svelte.js'
+
+						export type TestQuery$document = QueryFunction<TestQuery$result, TestQuery$input, typeof artifact>
+						export const TestQuery$document = (): TestQuery$document => createQuery(artifact)
 					`),
 				},
 			},
@@ -295,6 +317,11 @@ export * from './client'
 						    await store.fetch(params)
 						    return { TestQuery: store }
 						}
+
+						import { createQuery, type QueryFunction } from '$houdini/plugins/houdini-svelte/runtime/query.svelte.js'
+
+						export type TestQuery$document = QueryFunction<TestQuery$result, TestQuery$input, typeof artifact>
+						export const TestQuery$document = (): TestQuery$document => createQuery(artifact)
 					`),
 				},
 			},
@@ -326,6 +353,11 @@ export * from './client'
 						    await store.fetch(params)
 						    return { TestQuery: store }
 						}
+
+						import { createQuery, type QueryFunction } from '$houdini/plugins/houdini-svelte/runtime/query.svelte.js'
+
+						export type TestQuery$document = QueryFunction<TestQuery$result, TestQuery$input, typeof artifact>
+						export const TestQuery$document = (): TestQuery$document => createQuery(artifact)
 					`),
 				},
 			},
@@ -357,6 +389,11 @@ export * from './client'
 						    await store.fetch(params)
 						    return { TestQuery: store }
 						}
+
+						import { createQuery, type QueryFunction } from '$houdini/plugins/houdini-svelte/runtime/query.svelte.js'
+
+						export type TestQuery$document = QueryFunction<TestQuery$result, TestQuery$input, typeof artifact>
+						export const TestQuery$document = (): TestQuery$document => createQuery(artifact)
 					`),
 				},
 			},
@@ -396,6 +433,9 @@ export * from './client'
 							    await store.fetch(params)
 							    return { TestQuery: store }
 							}
+
+							export type TestQuery$document = TestQueryStore
+							export const TestQuery$document = (): TestQuery$document => new TestQueryStore()
 						`),
 				},
 			},
@@ -435,6 +475,9 @@ export * from './client'
 							    await store.fetch(params)
 							    return { TestQuery: store }
 							}
+
+							export type TestQuery$document = TestQueryStore
+							export const TestQuery$document = (): TestQuery$document => new TestQueryStore()
 						`),
 				},
 			},
@@ -470,6 +513,9 @@ export * from './client'
 							    await store.fetch(params)
 							    return { TestQuery: store }
 							}
+
+							export type TestQuery$document = TestQueryStore
+							export const TestQuery$document = (): TestQuery$document => new TestQueryStore()
 					`),
 				},
 			},
@@ -495,6 +541,11 @@ export * from './client'
 							        })
 							    }
 							}
+
+							import { createFragment, type FragmentDocument } from '$houdini/plugins/houdini-svelte/runtime/fragment.svelte.js'
+
+							export type TestFragment$document = FragmentDocument<TestFragment$data, typeof artifact>
+							export const TestFragment$document = (): TestFragment$document => createFragment(artifact)
 						`),
 				},
 			},
@@ -532,6 +583,8 @@ export * from './client'
 						    }
 						}
 
+						export type TestFragment$document = TestFragmentStore
+						export const TestFragment$document = (): TestFragment$document => new TestFragmentStore()
 					`,
 						graphql.FragmentPaginationQueryName("TestFragment"))),
 				},
@@ -570,6 +623,8 @@ export * from './client'
 						    }
 						}
 
+						export type TestFragment$document = TestFragmentStore
+						export const TestFragment$document = (): TestFragment$document => new TestFragmentStore()
 					`,
 						graphql.FragmentPaginationQueryName("TestFragment"))),
 				},
@@ -605,8 +660,65 @@ export * from './client'
 						    }
 						}
 
+						export type TestFragment$document = TestFragmentStore
+						export const TestFragment$document = (): TestFragment$document => new TestFragmentStore()
 					`,
 						graphql.FragmentPaginationQueryName("TestFragment"))),
+				},
+			},
+		},
+	})
+}
+
+// with legacyStores, every document's $document is backed by its store
+func TestGenerateStores_legacyStores(t *testing.T) {
+	tests.RunTable(t, tests.Table[config.PluginConfig, *plugin.HoudiniSvelte]{
+		Plugin: tests.Plugin[config.PluginConfig]{
+			Name: "houdini-svelte",
+			Config: config.PluginConfig{
+				LegacyStores: true,
+				CustomStores: config.PluginConfigStorePaths{
+					Query:    "$houdini/plugins/houdini-svelte/runtime/stores/query.js#QueryStore",
+					Mutation: "$houdini/plugins/houdini-svelte/runtime/stores/mutation.js#MutationStore",
+					Fragment: "$houdini/plugins/houdini-svelte/runtime/stores/fragment.js#FragmentStore",
+				},
+			},
+		},
+		Schema: `
+			type Query { version: String! }
+			type Mutation { updateVersion: String! }
+		`,
+		PerformTest: func(t *testing.T, plugin *plugin.HoudiniSvelte, test tests.Test[config.PluginConfig]) {
+			ctx := context.Background()
+			projectConfig, err := plugin.DB.ProjectConfig(ctx)
+			require.NoError(t, err)
+
+			_, err = generate.GenerateStores(ctx, plugin.Database(), plugin.Filesystem())
+			require.NoError(t, err)
+
+			for name, expected := range test.Extra {
+				contents, err := afero.ReadFile(
+					plugin.Filesystem(),
+					filepath.Join(projectConfig.PluginDirectory("houdini-svelte"), "stores", name+".ts"),
+				)
+				require.NoError(t, err)
+				require.Contains(t, string(contents), expected)
+				require.NotContains(t, string(contents), ".svelte.js")
+			}
+		},
+		Tests: []tests.Test[config.PluginConfig]{
+			{
+				Name: "documents are backed by stores",
+				Pass: true,
+				Input: []string{
+					`query LegacyQuery { version }`,
+					`mutation LegacyMutation { updateVersion }`,
+					`fragment LegacyFragment on Query { version }`,
+				},
+				Extra: map[string]any{
+					"LegacyQuery":    "export const LegacyQuery$document = (): LegacyQuery$document => new LegacyQueryStore()",
+					"LegacyMutation": "export const LegacyMutation$document = (): LegacyMutation$document => new LegacyMutationStore()",
+					"LegacyFragment": "export const LegacyFragment$document = (): LegacyFragment$document => new LegacyFragmentStore()",
 				},
 			},
 		},

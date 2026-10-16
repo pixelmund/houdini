@@ -5,6 +5,21 @@ export * from './stores/index.js'
 export * from './fragments.js'
 export * from './types.js'
 export * from './session.js'
+export { setHoudiniContext } from './context.js'
+export {
+	createQuery,
+	GraphQLErrors,
+	QueryResource,
+	type QueryFunction,
+	type QueryOptions,
+} from './query.svelte.js'
+export { createFragment, FragmentDocument } from './fragment.svelte.js'
+export { createMutation, MutationDocument, type MutateOptions } from './mutation.svelte.js'
+export {
+	createSubscription,
+	SubscriptionResource,
+	type SubscriptionFunction,
+} from './subscription.svelte.js'
 
 type LoadResult = Promise<{ [key: string]: QueryStore<any, any> }>
 type LoadAllInput = LoadResult | Record<string, LoadResult>

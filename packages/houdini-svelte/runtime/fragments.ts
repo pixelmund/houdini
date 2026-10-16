@@ -1,6 +1,7 @@
 import type { Fragment, FragmentArtifact, GraphQLObject } from 'houdini/runtime'
 import type { Readable } from 'svelte/store'
 
+import { FragmentDocument, readFragment } from './fragment.svelte.js'
 import type { FragmentStore } from './stores/index.js'
 import type {
 	BasePaginatedFragmentStore,
@@ -15,6 +16,23 @@ import type { FragmentStoreRefetchable } from './stores/refetchable.js'
 type AnyFragmentStoreFor<_Data extends GraphQLObject> =
 	| FragmentStore<_Data, {}>
 	| BasePaginatedFragmentStore<_Data, any, any>
+
+// fragment documents (runes): fragment() returns the data itself. Call it inside of $derived
+// so the value updates when the record changes in the cache or the reference changes:
+//
+//     const user = $derived(fragment(userRef, graphql(`fragment UserInfo on User { name }`)))
+export function fragment<_Data extends GraphQLObject, _Fragment extends Fragment<_Data>>(
+	ref: ReadonlyArray<_Fragment>,
+	fragment: FragmentDocument<_Data>
+): Array<Exclude<_Data, undefined>>
+export function fragment<_Data extends GraphQLObject, _Fragment extends Fragment<_Data>>(
+	ref: _Fragment,
+	fragment: FragmentDocument<_Data>
+): Exclude<_Data, undefined>
+export function fragment<_Data extends GraphQLObject, _Fragment extends Fragment<_Data>>(
+	ref: _Fragment | null | undefined,
+	fragment: FragmentDocument<_Data>
+): Exclude<_Data, undefined> | null
 
 // @plural fragment overloads: the reference is a list of fragment references and the
 // resulting store holds an array of data (one entry per item in the list).
@@ -54,8 +72,12 @@ export function fragment<_Data extends GraphQLObject, _Fragment extends Fragment
 }
 export function fragment<_Data extends GraphQLObject>(
 	ref: Fragment<_Data> | ReadonlyArray<Fragment<_Data>> | null | undefined,
-	store: FragmentStore<_Data, {}>
+	store: FragmentStore<_Data, {}> | FragmentDocument<_Data>
 ) {
+	if (store instanceof FragmentDocument) {
+		return readFragment(ref as any, store)
+	}
+
 	// make sure we got a query document
 	if (store.kind !== 'HoudiniFragment') {
 		throw new Error(`fragment can only take fragment documents. Found: ${store.kind}`)

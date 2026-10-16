@@ -48,6 +48,29 @@ export default async function kit_init(config: Config, page: SvelteTransformPage
 		import: ['deepEquals'],
 	}).ids[0]
 
+	// scope the documents rendered in this request (and the session they're sent with) to a
+	// context. this has to happen before anything else in the layout so the layout's own
+	// documents see it too.
+	const set_houdini_context = ensure_imports({
+		script: page.script,
+		sourceModule: '$houdini/plugins/houdini-svelte/runtime/context',
+		import: ['setHoudiniContext'],
+	}).ids[0]
+	const first_statement = page.script.body.findIndex(
+		(statement) => statement.type !== 'ImportDeclaration'
+	)
+	page.script.body.splice(
+		first_statement === -1 ? page.script.body.length : first_statement,
+		0,
+		AST.expressionStatement(
+			AST.callExpression(set_houdini_context, [
+				AST.callExpression(extract_session, [
+					AST.memberExpression(page_store, AST.identifier('data')),
+				]),
+			])
+		)
+	)
+
 	const session_initialized = AST.identifier('houdini__session__initialized')
 	const next_session = AST.identifier('nextSession')
 	const session_changed = AST.identifier('sessionChanged')

@@ -28,6 +28,9 @@ type PluginConfig struct {
 	CustomStores PluginConfigStorePaths `json:"customStores"`
 	// Static removes the session infrastructure from the application
 	Static bool `json:"static"`
+	// LegacyStores makes graphql() return the svelte/store based document stores instead
+	// of the runes based documents
+	LegacyStores bool `json:"legacyStores"`
 }
 
 type PluginConfigStorePaths struct {

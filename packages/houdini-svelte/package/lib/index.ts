@@ -37,6 +37,13 @@ export type HoudiniSvelteConfig = {
 	forceRunesMode?: boolean
 
 	/**
+	 * Make graphql() return the `svelte/store` based document stores from earlier versions
+	 * instead of runes based documents. This is a migration aid and will be removed.
+	 * @default false
+	 */
+	legacyStores?: boolean
+
+	/**
 	 * Override the classes used when building stores for documents. Values should take the form package.export
 	 * For example, if you have a store exported from $lib/stores you should set the value to "$lib/stores.CustomStore".
 	 */

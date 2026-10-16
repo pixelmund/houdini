@@ -1,0 +1,42 @@
+{
+	"name": "e2e-kit-async",
+	"version": "0.0.1",
+	"private": true,
+	"type": "module",
+	"imports": {
+		"#lib/*": "./src/lib/*"
+	},
+	"scripts": {
+		"web": "vite dev --host 0.0.0.0 --port 3027",
+		"api": "cross-env TZ=utc e2e-api",
+		"dev": "node ensureLinks.js && concurrently \"pnpm run web\" \"pnpm run api\" -n \"web,api\" -c \"green,magenta\"",
+		"tests": "playwright test",
+		"test": "npm run tests",
+		"preinstall": "node preInstall.js",
+		"generate": "pnpm houdini generate",
+		"houdini": "node ensureLinks.js && houdini",
+		"build": "node ensureLinks.js && vite build",
+		"preview": "vite preview --port 3037",
+		"preview-e2e": "concurrently \"pnpm run preview\" \"pnpm run api\" -n \"web,api\" -c \"green,magenta\"",
+		"check": "svelte-check --tsconfig ./tsconfig.json"
+	},
+	"devDependencies": {
+		"@playwright/test": "^1.60.0",
+		"@sveltejs/adapter-node": "^6.0.0",
+		"@sveltejs/kit": "^3.1.0",
+		"@sveltejs/vite-plugin-svelte": "^7.3.1",
+		"@types/node": "^25.9.1",
+		"concurrently": "^10.0.3",
+		"cross-env": "^10.1.0",
+		"e2e-api": "workspace:^",
+		"houdini": "workspace:^",
+		"svelte": "^5.57.2",
+		"svelte-check": "^4.7.6",
+		"tslib": "^2.8.1",
+		"typescript": "^6.0.3",
+		"vite": "^8.3.4"
+	},
+	"dependencies": {
+		"graphql-ws": "^6.0.8"
+	}
+}

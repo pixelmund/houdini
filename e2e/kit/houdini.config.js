@@ -43,7 +43,11 @@ const config = {
 	},
 
 	plugins: {
-		'houdini-svelte': {},
+		'houdini-svelte': {
+			// this suite covers the store based api. the runes based documents are
+			// covered by e2e/kit-async
+			legacyStores: true,
+		},
 	},
 
 	pluginTransport: 'env:HOUDINI_PLUGIN_TRANSPORT',

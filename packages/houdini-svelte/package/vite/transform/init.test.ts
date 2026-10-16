@@ -14,12 +14,14 @@ test('modifies root +layout.svelte to import adapter', async function () {
 	)
 
 	expect(result).toMatchInlineSnapshot(`
+		import { setHoudiniContext } from "$houdini/plugins/houdini-svelte/runtime/context";
 		import { deepEquals } from "houdini/runtime";
 		import { getCache } from "$houdini";
 		import { page } from "$app/state";
 		import { extractSession, getClientSession, setClientSession } from "$houdini/plugins/houdini-svelte/runtime/session";
 		import { onMount } from "svelte";
 		import { setClientStarted } from "$houdini/plugins/houdini-svelte/runtime/adapter";
+		setHoudiniContext(extractSession(page.data));
 		export let data
 		let houdini__session__initialized = false;
 		onMount(() => setClientStarted());

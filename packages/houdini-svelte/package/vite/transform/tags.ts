@@ -19,9 +19,8 @@ export default async function GraphQLTagProcessor(config: Config, page: SvelteTr
 
 			const { id } = store_import({ page, artifact: { name: operation.name!.value } })
 
-			// we're going to turn the graphql tag into a reference to the document's
-			// store
-			node.replaceWith(AST.newExpression(id, []))
+			// we're going to turn the graphql tag into a call to the document's factory
+			node.replaceWith(AST.callExpression(id, []))
 			replaced = true
 		},
 	})
@@ -37,7 +36,7 @@ function store_import({
 	const { ids, added } = ensure_imports({
 		script: page.script,
 		sourceModule: `$houdini/plugins/houdini-svelte/stores/${artifact.name}`,
-		import: [`${artifact.name}Store`],
+		import: [`${artifact.name}$document`],
 	})
 
 	return { id: ids[0], added }
